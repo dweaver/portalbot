@@ -3,9 +3,12 @@
 """portalbot - Portals Utility - update widget js and domain css
 
 Usage:
-    portalbot upload [options] --domain=<domain> --user=<user> [--pass=<pass>] [--widgetjs=<file> --portal=<id> --dashboard=<id> --widget=<id>] [--domaincss=<file>]
+    portalbot upload [options] --domain=<domain> --user=<user>
+        [--widgetjs=<file> --portal=<id> --dashboard=<id> --widget=<id>]
+        [--domaincss=<file>]
+        [--noninteractive]
 
-    If --pass is omitted, portalbot fills in your username and gives you 60 seconds to enter your password.
+    Portalbot fills in your username and gives you 60 seconds to enter your password.
 
     portal and dashboard ids can be taken from the dashboard url: /view/<portal>/<dashboard>
 
@@ -14,6 +17,8 @@ Usage:
     you see <img id="menuicon1" ... the widget id is 1.
 
     Currently only non-public dashboard ids are supported.
+
+    By default, the browser is left open. Pass --noninteractive to quit when upload completes.
 
 Options:
     -h --help     Show this screen
@@ -94,9 +99,21 @@ class PortalBot(SeleniumApp):
             el.clear()
             el.send_keys(js)
             submitel = '#formeditwidget' + widgetid + ' #diveditwidgetsave' + widgetid
-            self.click_wait(submitel, '#divwidget' + widgetid)
-            # click the "Execute Javascript" button
-            self.click('fieldset.execution button')
+            self.click(submitel)
+            try:
+                notice = self.wait("div.notice", wait_sec=3)
+                print(notice.text)
+            except TimeoutException:
+                self.wait('#divwidget' + widgetid, wait_sec=3)
+
+                # click the "Execute Javascript" button, if it shows up
+                js_button_css = 'fieldset.execution button'
+                try:
+                    self.css(js_button_css)
+                    self.click(js_button_css)
+                except:
+                    pass
+
             # scroll to the top of the window
             self.script('window.scrollTo(0,0)')
 
@@ -117,6 +134,8 @@ class PortalBot(SeleniumApp):
                 userel.send_keys(self.user)
             if self.password:
                 self.css('#login_pass').send_keys(self.password)
+            else:
+                self.css('#login_pass').click()
 
             # time login
             t1 = time.time()
@@ -138,14 +157,9 @@ class PortalBot(SeleniumApp):
             # if there's no login element, we were already logged in
             pass
 
-def handle_args(args):
 
-    # time login
+def run_command(p, args):
     t1 = time.time()
-
-    p = PortalBot('https://' + args['--domain'] + '.exosite.com')
-    p.setuser(user=args['--user'], password=args['--pass'])
-
     domaincss = args['--domaincss']
     if domaincss is not None:
         p.upload_css(domaincss)
@@ -158,11 +172,32 @@ def handle_args(args):
         print "There was nothing to do!"
 
     t2 = time.time()
-    print("Uploaded in {:0.3f}s".format((t2 - t1)))
+    print("Completed in {:0.3f}s".format((t2 - t1)))
+
+
+def handle_args(args):
+    p = PortalBot('https://' + args['--domain'] + '.exosite.com')
+    args['--pass'] = None
+    p.setuser(user=args['--user'], password=args['--pass'])
+
+    if args['--noninteractive']:
+        # run once
+        run_command(p, args)
+    else:
+        # run forever
+        while True:
+            # time login
+            run_command(p, args)
+            try:
+                input("Press Enter to send again, Ctrl + C to quit...")
+            except KeyboardInterrupt:
+                return
+            except:
+                continue
 
 
 if __name__ == '__main__':
-    args = docopt(__doc__, version="Portals Utility 0.0.1")
+    args = docopt(__doc__, version="Portals Utility 0.0.2")
     #try:
     handle_args(args)
     #except Exception as ex:
