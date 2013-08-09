@@ -8,17 +8,22 @@ Usage:
         [--domaincss=<file>]
         [--noninteractive]
 
-    Portalbot fills in your username and gives you 60 seconds to enter your password.
+    Portalbot fills in your username and gives you 60 seconds to enter your
+    password.
 
-    portal and dashboard ids can be taken from the dashboard url: /view/<portal>/<dashboard>
+    portal and dashboard ids can be taken from the dashboard url:
 
-    Finding your widget id requires inspecting the DOM. In Chrome, right click on the down arrow on the
-    top right in the widget and select Inspect Element. The id is from the id of that element, e.g. if
-    you see <img id="menuicon1" ... the widget id is 1.
+        /view/<portal>/<dashboard>
+
+    Finding your widget id requires inspecting the DOM. In Chrome, right click
+    on the down arrow on the top right in the widget and select Inspect
+    Element. The id is from the id of that element, e.g. if you see
+    <img id="menuicon1" ... the widget id is 1.
 
     Currently only non-public dashboard ids are supported.
 
-    By default, the browser is left open. Pass --noninteractive to quit when upload completes.
+    By default, the browser is left open. Pass --noninteractive to quit when
+    upload completes.
 
 Options:
     -h --help     Show this screen
