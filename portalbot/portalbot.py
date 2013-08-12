@@ -52,12 +52,12 @@ class SeleniumApp():
     def css(self, selector):
         return self.br.find_element_by_css_selector(selector)
 
-    def wait(self, wait_selector, wait_sec=60):
+    def wait(self, wait_selector, wait_sec=7):
         '''Wait for an element'''
         return WebDriverWait(self.br, wait_sec, 0.1).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, wait_selector)))
 
-    def click_wait(self, click_selector, wait_selector, wait_sec=60):
+    def click_wait(self, click_selector, wait_selector, wait_sec=7):
         '''Find an element, click on it, and then wait for another element'''
         self.br.find_element_by_css_selector(click_selector).click()
         self.wait(wait_selector, wait_sec)
@@ -93,9 +93,11 @@ class PortalBot(SeleniumApp):
         with open(widgetjsfile) as f:
             js = f.read()
             menuiconcss = '#menuicon' + widgetid
-            self.click(menuiconcss)
+            self.wait(menuiconcss)
+            editiconcss = '#editmenu' + widgetid
+            self.click_wait(menuiconcss, editiconcss)
             textcss = 'span.script textarea'
-            self.click_wait('#editmenu' + widgetid, textcss)
+            self.click_wait(editiconcss, textcss)
             # need to convert the code mirror object to text area mode
             # http://codemirror.net/doc/manual.html#fromTextArea
             self.script(
@@ -149,14 +151,16 @@ class PortalBot(SeleniumApp):
             # matching button outside the div.form. Could also look for the visible
             # one.
             if self.user and self.password:
-                self.click_wait('div.form button[type="submit"]', 'div.admin_menu')
+                self.click_wait('div.form button[type="submit"]',
+                                'div.admin_menu',
+                                wait_sec=60)
             else:
-                self.wait('div.admin_menu')
+                self.wait('div.admin_menu',
+                          wait_sec=60)
 
             t2 = time.time()
 
             print("Took {:0.3f}s to login".format((t2 - t1)))
-
 
         except NoSuchElementException:
             # if there's no login element, we were already logged in
